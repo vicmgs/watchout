@@ -7,6 +7,7 @@ var source = [];
 var counter = 0;
 var score = 0;
 var highscore = 0;
+var numAsteroids = 10;
 
 var throttle = function(func, wait) {
   var cancall = true;
@@ -24,32 +25,58 @@ var throttle = function(func, wait) {
 
 var protagonist = [{x: 375, y: 250}];
 
-for (var i = 0; i < 30; i++) {
-  source.push({x: 700 * Math.random() + 25, y: 450 * Math.random() + 25});
+for (var i = 0; i < numAsteroids; i++) {
+  source.push({x: 800 * Math.random() - 50, y: 550 * Math.random() - 50});
 }
+
+var addAsteroids = function(numAsteroids) {
+  for (var i = 0; i < numAsteroids; i++) {
+    source.push({x: 800 * Math.random() - 50, y: 550 * Math.random() - 50});  
+  }
+  update(source);
+};
+
+var resetAsteroids = function() {
+  source = [];
+  for (var i = 0; i < 10; i++) {
+    source.push({x: 800 * Math.random() - 50, y: 550 * Math.random() - 50});  
+  }
+  update(source);
+};
 
 var throttleCount = throttle(function() {
   counter++;
-}, 1000);
+}, 250);
 
+var min = 1000; 
 
 var checkCollision = function() {
-  d3.select('body').select('.current').select('span').text(score);
   score += 10;
+  d3.select('body').select('.current').select('span').text(score);
+
+  if (score === min) {
+    addAsteroids(numAsteroids);
+    min += 1000;
+  }
+
   var locations = d3.select('svg').selectAll('image');
   // var protagLoc = {protagonist[0].x : protagonist[0].y};
   for ( var i = 0; i < source.length; i++) {
     var thisLocation = locations._groups[0][i];
-    if (Math.sqrt(Math.pow((thisLocation.x.animVal.value + 10 - protagonist[0].x), 2) +
-      Math.pow((thisLocation.y.animVal.value + 10 - protagonist[0].y), 2)) < 20){
+    if (Math.sqrt(Math.pow((thisLocation.x.animVal.value + 25 - protagonist[0].x), 2) +
+      Math.pow((thisLocation.y.animVal.value + 25 - protagonist[0].y), 2)) < 35) {
         throttleCount();
         d3.select('body').select('.collisions').select('span').text(counter);
-        if (d3.select('body').select('.current').select('span').text(score) > highscore) {
-          highscore = score;
+        var temp = score;
+        score = 0;
+        min = 1000;
+        resetAsteroids();
+        d3.select('body').select('.current').select('span').text(score);
+        if (temp > highscore) {
+          highscore = temp;
           d3.select('body').select('.highscore').select('span').text(highscore);
         }
-        score = 0;
-        d3.select('body').select('.current').select('span').text(score);
+        
       }
 
   }
@@ -86,24 +113,33 @@ function update(data) {
     .attr('xlink:href', 'asteroid.png')
     .attr('x', function(d) { return d.x; })
     .attr('y', function(d) { return d.y; })
-    .attr('width', 20)
-    .attr('height', 20);
+    .attr('width', 50)
+    .attr('height', 50);
 
   d3.select('svg').selectAll('image')
   .data(data)
+  .attr('fill-opacity', 0)
   .enter().append('image')
+    .transition().duration(2000)
+    .attr('fill-opacity', 1)
     .attr('xlink:href', 'asteroid.png')
     .attr('x', function(d) { return d.x; })
     .attr('y', function(d) { return d.y; })
-    .attr('width', 20)
-    .attr('height', 20);
+    .attr('width', 50)
+    .attr('height', 50);
+
+  d3.select('svg').selectAll('image')
+  .data(data)
+  .exit()
+    .remove();
+
 };
 
 
 setInterval(function() {
   for (var i = 0; i < source.length; i++) {
-    source[i].x = 700 * Math.random() + 25;
-    source[i].y = 450 * Math.random() + 25;
+    source[i].x = 800 * Math.random() - 50;
+    source[i].y = 550 * Math.random() - 50;
   };
   update(source);
   }, 2000);
